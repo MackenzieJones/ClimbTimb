@@ -45,7 +45,7 @@ void initHTTP(){
     Serial.printf("Starting SSDP...\n");
     SSDP.setSchemaURL("description.xml");
     SSDP.setHTTPPort(80);
-    SSDP.setName("Button1");
+    SSDP.setName("Button2");
     SSDP.begin();
 
     Serial.printf("Ready!\n");

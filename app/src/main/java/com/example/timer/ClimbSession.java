@@ -160,12 +160,12 @@ public class ClimbSession {
     private String timeToString(int time){
         String mins, secs, millis;
 
-        millis = "" + time % 1000;
+        millis = String.format("%03d", (int)(time % 1000));
         time = time / 1000;
-        secs = "" + time % 60;
+        secs = String.format("%02d", (int)(time % 60));
         time = time / 60;
         mins = "" + time;
 
-        return mins + ":" + String.format("%02d", secs) + "." + String.format("%03d", millis);
+        return mins + ":" +  secs + "." + millis;
     }
 }
