@@ -3,8 +3,8 @@
 #include <ESP8266SSDP.h>
 
 #ifndef STASSID
-#define STASSID "Pleasure"
-#define STAPSK  "bingbing"
+#define STASSID "FBC-GUEST"
+#define STAPSK  "climbing2019"
 #endif
 
 const char* ssid = STASSID;
@@ -45,7 +45,7 @@ void initHTTP(){
     Serial.printf("Starting SSDP...\n");
     SSDP.setSchemaURL("description.xml");
     SSDP.setHTTPPort(80);
-    SSDP.setName("Button2");
+    SSDP.setName("Button1");
     SSDP.begin();
 
     Serial.printf("Ready!\n");

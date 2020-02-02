@@ -87,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
         if (dt != null)
             stopDisplayTiming();
         dt = new DisplayTimer();
-        dt.execute();
+        dt.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void stopDisplayTiming(){
@@ -108,13 +108,11 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected String doInBackground(String... strings) {
-
             long lastTimeActivated = 0;
             while(currentRun != null) {
                 time1 = 0;
                 time2 = 0;
                 if (System.nanoTime() - lastTimeActivated > 500 * 1000 * 1000) {
-                    System.out.println("Live: " + lastTimeActivated/1000/1000);
                     lastTimeActivated = System.nanoTime();
 
                     HttpURLConnection urlConnection = null;
@@ -196,10 +194,10 @@ public class MainActivity extends AppCompatActivity {
             if (currentRun != null) {
                 if (currentRun.finished) {
                     if (!currentRun.didFirstFinishCheck()) {
-                        timerText.setText(currentRun.getResultTime());
                         stopDisplayTiming();
+                        timerText.setText(currentRun.getResultTime());
                     }
-                } else {
+                } else if (currentRun.active){
                     if (!currentRun.didFirstStartCheck()) {
                         startDisplayTiming();
                     }
@@ -210,13 +208,12 @@ public class MainActivity extends AppCompatActivity {
         private void timerLogic() {
             if (device1 != null && device2 != null){
                 try {
-                    int time1 = (int)(device1.get("time"));
-                    int pressedTime1 = (int)(device1.get("lasttimepressed"));
-                    int time2 = (int)(device2.get("time"));
-                    int pressedTime2 = (int)(device2.get("lasttimepressed"));
-                    currentRun.updateTimes(time1, pressedTime1, time2, pressedTime2);
-                    currentRun.updateLogic();
+                    int time1 = (int) (device1.get("time"));
+                    int pressedTime1 = (int) (device1.get("lasttimepressed"));
+                    int time2 = (int) (device2.get("time"));
+                    int pressedTime2 = (int) (device2.get("lasttimepressed"));
 
+                    currentRun.updateTimes(time1, pressedTime1, time2, pressedTime2);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -241,8 +238,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected void onProgressUpdate(String... values) {
-            if (currentRun != null)
-                timerText.setText(currentRun.getCurrentApproxTime());
+            if (currentRun != null && !currentRun.finished) {
+                String time = currentRun.getCurrentApproxTime();
+                timerText.setText(time);
+            }
         }
     };
 
@@ -251,12 +250,10 @@ public class MainActivity extends AppCompatActivity {
         status.setText("Success");
         status = findViewById(R.id.connectingText2);
         status.setText("Success");
-
-        Button b = findViewById(R.id.saveButton);
-        b.setEnabled(timerText.getText().equals("0:00.000"));
     }
 
     private void failedConnection(boolean button1, boolean button2){
+        System.out.println("Failed Connecting");
         TextView status1 = findViewById(R.id.connectingText1);
         if (button1){
             status1.setText("Failed");
@@ -281,7 +278,6 @@ public class MainActivity extends AppCompatActivity {
         attemptButton.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v) {
                 String firstUrl = "http://" + ((EditText)findViewById(R.id.ipField)).getText().toString() + "/";
-                System.out.println("############# First: " + firstUrl);
                 String secondUrl = "http://" + ((EditText)findViewById(R.id.ipField2)).getText().toString() + "/";
                 try {
                     url1 = new URL(firstUrl);
@@ -310,8 +306,6 @@ public class MainActivity extends AppCompatActivity {
                 fakeList = newElement + fakeList;
                 TextView list = findViewById(R.id.entryList);
                 list.setText(fakeList);
-
-                Log.d("##########", name.getText().toString() + timerText.getText().toString());
             }
         });
 
@@ -330,6 +324,10 @@ public class MainActivity extends AppCompatActivity {
         resetTimeButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 timerText.setText("0:00.000");
+                stopDisplayTiming();
+                stopTimer();
+
+                startTimer();
             }
         });
     }

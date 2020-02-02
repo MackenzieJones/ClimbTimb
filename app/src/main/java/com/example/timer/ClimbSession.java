@@ -15,17 +15,21 @@ public class ClimbSession {
     private boolean checkedActive;
     public boolean finished;
     public boolean checkedFinish;
+    private boolean firstEntry;
+
     public int startButton;
     public int runStartTime;
+    public int runStartRealTime;
     public int runEndTime;
+    public long runEndRealTime;
     public int finalTime;
 
     public int dev1time;
     public int dev2time;
     public int dev1PressTime;
     public int dev2PressTime;
-    public int dev1PressRealTime;
-    public int dev2PressRealTime;
+    public long dev1PressRealTime;
+    public long dev2PressRealTime;
 
     private int syncTime;
 
@@ -40,28 +44,45 @@ public class ClimbSession {
         dev1PressTime = 0;
         dev2PressTime = 0;
 
+        active = false;
         checkedActive = false;
         finished = false;
+        checkedFinish = false;
 
-        checkedFinish = true;
+        firstEntry = true;
     }
 
     public void startRun(int time, int button){
+        runStartTime = (int)(System.nanoTime() / 1000000);
         runStartTime = time;
         startButton = button;
         active = true;
+        System.out.println("Activated");
     }
 
     public void updateTimes(int time1, int pressTime1, int time2, int pressTime2){
-        addSyncTime(time1, time2);
-        if (pressTime1 > dev1PressTime){
+        if (!firstEntry) {
+            if (pressTime1 > dev1PressTime) {
+                dev1PressRealTime = (int) (System.nanoTime() / 1000000);
+                dev1PressTime = pressTime1;
+            }
+            if (pressTime2 > dev2PressTime) {
+                dev2PressRealTime = (int)(System.nanoTime() / 1000000);
+                dev2PressTime = pressTime2;
+            }
+            updateLogic();
+        } else {
             dev1PressRealTime = (int)(System.nanoTime() / 1000000);
             dev1PressTime = pressTime1;
-        }
-        if (pressTime2 > dev2PressTime){
             dev2PressRealTime = (int)(System.nanoTime() / 1000000);
             dev2PressTime = pressTime2;
+            runStartTime = pressTime1;
+            firstEntry = false;
         }
+        dev1time = time1;
+        dev2time = time2;
+        addSyncTime(time1, time2);
+
     }
 
     public void updateLogic(){
@@ -107,33 +128,47 @@ public class ClimbSession {
         for (int i = 0; i < 50; i++){
             if(oldDev1Times[i] != -1) {
                 totalCount++;
-                totalDifference = totalDifference + oldDev1Times[i] - oldDev2Times[i];
+                if (startButton == 1)
+                    totalDifference = totalDifference + (oldDev1Times[i] - oldDev2Times[i]);
+                else
+                    totalDifference = totalDifference + (oldDev2Times[i] - oldDev1Times[i]);
             }
         }
         syncTime = totalDifference / totalCount;
+        System.out.println("SyncTime1: " + syncTime);
 
         //Accounting for the time difference between accessing the buttons' data
+        /*
         for (int i = 0; i < 50; i++){
             if(oldDev1RealTimes[i] != -1) {
                 totalCount++;
-                totalDifference = totalDifference + oldDev1RealTimes[i] - oldDev2RealTimes[i];
+                if (startButton == 1)
+                    totalDifference = totalDifference + oldDev1RealTimes[i] - oldDev2RealTimes[i];
+                else
+                    totalDifference = totalDifference + oldDev2RealTimes[i] - oldDev1RealTimes[i];
             }
         }
-
+        */
         //TODO: Maybe combine? It will work the same, but I don't think I want it in that form
-        syncTime += totalDifference / totalCount;
+        //syncTime += totalDifference / totalCount;
+        //System.out.println("\tSyncTime2: " + syncTime);
+
     }
 
     public void finishRun(int time){
+        runEndRealTime = (System.nanoTime() / 1000000);
         runEndTime = time;
         synchronizeDevices();
-        finalTime = runEndTime - runStartTime + syncTime;
+        //TODO: Fix this, final time always ends up much bigger
+        System.out.println("Start: " + runStartTime + "\nEnd: " + runEndTime + "\nSyncTime: " + syncTime);
+        finalTime = (runEndTime - runStartTime + syncTime);
+        //finalTime = runEndRealTime - runStartRealTime;
         active = false;
         finished = true;
     }
 
     public String getResultTime(){
-        return timeToString(runEndTime);
+        return timeToString(finalTime);
     }
 
     public boolean didFirstStartCheck(){
@@ -150,14 +185,15 @@ public class ClimbSession {
 
     public String getCurrentApproxTime(){
         if (startButton == 1){
-            return timeToString((int)(System.nanoTime() / 1000000) - dev1PressRealTime);
+            return timeToString((int)(System.nanoTime() / 1000000 - dev1PressRealTime));
         } else {
-            return timeToString((int)(System.nanoTime() / 1000000) - dev2PressRealTime);
+            return timeToString((int)(System.nanoTime() / 1000000 - dev2PressRealTime));
 
         }
     }
 
     private String timeToString(int time){
+        System.out.println("Result: " + time);
         String mins, secs, millis;
 
         millis = String.format("%03d", (int)(time % 1000));
@@ -168,4 +204,5 @@ public class ClimbSession {
 
         return mins + ":" +  secs + "." + millis;
     }
+
 }
