@@ -1,174 +1,91 @@
 package com.example.timer;
 
-import java.util.Arrays;
-
 public class ClimbSession {
-
-    private int[] oldDev1Times = new int[50];
-    private int[] oldDev2Times = new int[50];
-    private int tqp; // Time queue pointer
-    private int[] oldDev1RealTimes = new int[50];
-    private int[] oldDev2RealTimes = new int[50];
-    private int rtqp; // Real time queue pointer
 
     public boolean active;
     private boolean checkedActive;
     public boolean finished;
     public boolean checkedFinish;
-    private boolean firstEntry;
 
-    public int startButton;
-    public int runStartTime;
-    public int runStartRealTime;
-    public int runEndTime;
-    public long runEndRealTime;
-    public int finalTime;
+    public EasyButton b1;
+    public EasyButton b2;
+    public EasyButton startButton;
+    public EasyButton finishButton;
 
-    public int dev1time;
-    public int dev2time;
-    public int dev1PressTime;
-    public int dev2PressTime;
-    public long dev1PressRealTime;
-    public long dev2PressRealTime;
+    private long runStartTime;
+    private long runEndTime;
+    private long runStartRealTime;
 
-    private int syncTime;
+    private long finalRunTime;
+    private long syncTime;
 
     public ClimbSession(){
-        Arrays.fill(oldDev1Times, -1);
-        Arrays.fill(oldDev2Times, -1);
-        Arrays.fill(oldDev1RealTimes, -1);
-        Arrays.fill(oldDev2RealTimes, -1);
-        tqp = 0;
-        rtqp = 0;
-
-        dev1PressTime = 0;
-        dev2PressTime = 0;
-
         active = false;
         checkedActive = false;
         finished = false;
         checkedFinish = false;
 
-        firstEntry = true;
+        b1 = new EasyButton();
+        b2 = new EasyButton();
     }
 
-    public void startRun(int time, int button){
-        runStartTime = (int)(System.nanoTime() / 1000000);
-        runStartTime = time;
-        startButton = button;
+    public void startRun(EasyButton startButton, EasyButton finishButton){
+        runStartRealTime = (System.nanoTime() / 1000000);
+        runStartTime = startButton.curPressTime;
+        this.startButton = startButton;
+        this.finishButton = finishButton;
         active = true;
         System.out.println("Activated");
     }
 
-    public void updateTimes(int time1, int pressTime1, int time2, int pressTime2){
-        if (!firstEntry) {
-            if (pressTime1 > dev1PressTime) {
-                dev1PressRealTime = (int) (System.nanoTime() / 1000000);
-                dev1PressTime = pressTime1;
-            }
-            if (pressTime2 > dev2PressTime) {
-                dev2PressRealTime = (int)(System.nanoTime() / 1000000);
-                dev2PressTime = pressTime2;
-            }
-            updateLogic();
-        } else {
-            dev1PressRealTime = (int)(System.nanoTime() / 1000000);
-            dev1PressTime = pressTime1;
-            dev2PressRealTime = (int)(System.nanoTime() / 1000000);
-            dev2PressTime = pressTime2;
-            runStartTime = pressTime1;
-            firstEntry = false;
-        }
-        dev1time = time1;
-        dev2time = time2;
-        addSyncTime(time1, time2);
+    public void update(long time1, long pressTime1, long time2, long pressTime2){
+        b1.updateTimes(time1, pressTime1);
+        b2.updateTimes(time2, pressTime2);
 
-    }
+        boolean didB1Press = b1.curPressTime != b1.pressInitTime;
+        boolean didB2Press = b2.curPressTime != b2.pressInitTime;
 
-    public void updateLogic(){
-        //Activate run if there's no current run, if the last press isn't at time 0, and if the time between current time and pressed time is less than 3 seconds
         if (!active) {
-            if (dev1PressTime != 0 && dev1time - dev1PressTime < 3000) {
-                startRun(dev1PressTime, 1);
-            }
-            if (dev2PressTime != 0 && dev2time - dev2PressTime < 3000) {
-                startRun(dev2PressTime, 2);
+            if (didB1Press && didB2Press) {
+                b1.updateInitTimes();
+                b2.updateInitTimes();
+            } else if (didB1Press){
+                startRun(b1, b2);
+            } else if (didB2Press) {
+                startRun(b2, b1);
             }
         } else {
-            //When the run is started with button1, end the run if the real time of button2 press is after the button1 press
-            if (startButton == 1 && dev2PressRealTime > dev1PressRealTime){
-                finishRun(dev2PressTime);
-            }
-            //When the run is started with button2, end the run if the real time of button1 press is after the button2 press
-            else if (startButton == 2 && dev1PressRealTime > dev2PressRealTime){
-                finishRun(dev1PressTime);
+            if (finishButton.curPressRealTime > runStartRealTime){
+                finishRun();
             }
         }
-    }
-
-    private void addSyncTime(int time1, int time2){
-        oldDev1Times[tqp] = time1;
-        oldDev2Times[tqp] = time2;
-        tqp = (tqp+1) % 50;
-    }
-
-    public void addSyncRealTime(int time1, int time2) {
-        oldDev1RealTimes[rtqp] = time1;
-        oldDev2RealTimes[rtqp] = time2;
-        rtqp = (rtqp+1) % 50;
     }
 
     public void synchronizeDevices(){
-        //TODO: Not sure if I should deal with real-time outliers, they may crash the run anyway
-
-        int totalCount = 0;
-        int totalDifference = 0;
+        long totalCount = 0;
+        long totalDifference = 0;
 
         //Accounting for the button times being different
-        for (int i = 0; i < 50; i++){
-            if(oldDev1Times[i] != -1) {
+        for (int i = 0; i < finishButton.oldTimes.length; i++){
+            if(finishButton.oldTimes[i] != -1) {
                 totalCount++;
-                if (startButton == 1)
-                    totalDifference = totalDifference + (oldDev1Times[i] - oldDev2Times[i]);
-                else
-                    totalDifference = totalDifference + (oldDev2Times[i] - oldDev1Times[i]);
+                totalDifference = totalDifference + (finishButton.oldTimes[i] - startButton.oldTimes[i]);
             }
         }
         syncTime = totalDifference / totalCount;
         System.out.println("SyncTime1: " + syncTime);
-
-        //Accounting for the time difference between accessing the buttons' data
-        /*
-        for (int i = 0; i < 50; i++){
-            if(oldDev1RealTimes[i] != -1) {
-                totalCount++;
-                if (startButton == 1)
-                    totalDifference = totalDifference + oldDev1RealTimes[i] - oldDev2RealTimes[i];
-                else
-                    totalDifference = totalDifference + oldDev2RealTimes[i] - oldDev1RealTimes[i];
-            }
-        }
-        */
-        //TODO: Maybe combine? It will work the same, but I don't think I want it in that form
-        //syncTime += totalDifference / totalCount;
-        //System.out.println("\tSyncTime2: " + syncTime);
-
     }
 
-    public void finishRun(int time){
-        runEndRealTime = (System.nanoTime() / 1000000);
-        runEndTime = time;
+    public void finishRun(){
+        runEndTime = finishButton.curPressTime;
         synchronizeDevices();
-        //TODO: Fix this, final time always ends up much bigger
-        System.out.println("Start: " + runStartTime + "\nEnd: " + runEndTime + "\nSyncTime: " + syncTime);
-        finalTime = (runEndTime - runStartTime + syncTime);
-        //finalTime = runEndRealTime - runStartRealTime;
+        finalRunTime = runEndTime - runStartTime + syncTime;
         active = false;
         finished = true;
     }
 
     public String getResultTime(){
-        return timeToString(finalTime);
+        return timeToString(finalRunTime);
     }
 
     public boolean didFirstStartCheck(){
@@ -184,21 +101,16 @@ public class ClimbSession {
     }
 
     public String getCurrentApproxTime(){
-        if (startButton == 1){
-            return timeToString((int)(System.nanoTime() / 1000000 - dev1PressRealTime));
-        } else {
-            return timeToString((int)(System.nanoTime() / 1000000 - dev2PressRealTime));
-
-        }
+        return timeToString(System.nanoTime() / 1000000 - runStartRealTime);
     }
 
-    private String timeToString(int time){
+    private String timeToString(long time){
         System.out.println("Result: " + time);
         String mins, secs, millis;
 
-        millis = String.format("%03d", (int)(time % 1000));
+        millis = String.format("%03d", (time % 1000));
         time = time / 1000;
-        secs = String.format("%02d", (int)(time % 60));
+        secs = String.format("%02d", (time % 60));
         time = time / 60;
         mins = "" + time;
 

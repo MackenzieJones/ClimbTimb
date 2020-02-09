@@ -4,8 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -21,7 +19,6 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.concurrent.ExecutionException;
 
 
 // Climb timer alpha
@@ -188,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
                 failedConnection(device1Failed, device2Failed);
                 stopTimer();
             } else {
-                currentRun.addSyncRealTime(time1, time2);
+                //currentRun.addSyncRealTime(time1, time2);
                 successfulConnection();
             }
             if (currentRun != null) {
@@ -213,7 +210,7 @@ public class MainActivity extends AppCompatActivity {
                     int time2 = (int) (device2.get("time"));
                     int pressedTime2 = (int) (device2.get("lasttimepressed"));
 
-                    currentRun.updateTimes(time1, pressedTime1, time2, pressedTime2);
+                    currentRun.update(time1, pressedTime1, time2, pressedTime2);
                 } catch (JSONException e) {
                     e.printStackTrace();
                 }
@@ -289,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
                 } catch (MalformedURLException e) {
                     e.printStackTrace();
                 }
-
                 startTimer();
             }
         });
