@@ -42,8 +42,8 @@ public class ClimbSession {
         b1.updateTimes(time1, pressTime1);
         b2.updateTimes(time2, pressTime2);
 
-        boolean didB1Press = b1.curPressTime != b1.pressInitTime;
-        boolean didB2Press = b2.curPressTime != b2.pressInitTime;
+        boolean didB1Press = b1.curPressTime > b1.pressInitTime;
+        boolean didB2Press = b2.curPressTime > b2.pressInitTime;
 
         if (!active) {
             if (didB1Press && didB2Press) {
@@ -69,11 +69,11 @@ public class ClimbSession {
         for (int i = 0; i < finishButton.oldTimes.length; i++){
             if(finishButton.oldTimes[i] != -1) {
                 totalCount++;
-                totalDifference = totalDifference + (finishButton.oldTimes[i] - startButton.oldTimes[i]);
+                totalDifference = totalDifference + (startButton.oldTimes[i] - finishButton.oldTimes[i]);
             }
         }
         syncTime = totalDifference / totalCount;
-        System.out.println("SyncTime1: " + syncTime);
+        System.out.println("SyncTime: " + syncTime);
     }
 
     public void finishRun(){
@@ -101,11 +101,13 @@ public class ClimbSession {
     }
 
     public String getCurrentApproxTime(){
+        System.out.println(System.nanoTime() / 1000000 - runStartRealTime);
         return timeToString(System.nanoTime() / 1000000 - runStartRealTime);
     }
 
     private String timeToString(long time){
-        System.out.println("Result: " + time);
+        if (time > 86399000)
+            return "0:00.000";
         String mins, secs, millis;
 
         millis = String.format("%03d", (time % 1000));

@@ -1,9 +1,11 @@
 package com.example.timer;
 
-import androidx.appcompat.app.AppCompatActivity;
+import android.app.Activity;
 
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -25,7 +27,7 @@ import java.util.ArrayList;
 // Mac device1nes
 // Jan 30, 2020
 //^((?!isSBSettingEnabled|identical|pointer).)*$
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends Activity {
 
     private URL url1;
     private URL url2;
@@ -67,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
             stopTimer();
         gd = new GetDevices();
         currentRun = new ClimbSession();
-        gd.execute();
+        gd.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
 
     public void stopTimer(){
@@ -112,66 +114,12 @@ public class MainActivity extends AppCompatActivity {
                 if (System.nanoTime() - lastTimeActivated > 500 * 1000 * 1000) {
                     lastTimeActivated = System.nanoTime();
 
-                    HttpURLConnection urlConnection = null;
-                    HttpURLConnection ur2Connection = null;
-
-                    // Connect to the devices, time how long it took to connect
-                    try {
-                        urlConnection = (HttpURLConnection) url1.openConnection();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    try {
-
-                        ur2Connection = (HttpURLConnection) url2.openConnection();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-
-                    //Get the json data of the button times
-                    try {
-                        long startTime = System.nanoTime() / 1000000;
-                        InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                        if (in != null) {
-                            String jsonBuffer = "";
-                            int i;
-                            while ((i = in.read()) != -1)
-                                jsonBuffer += (char) i;
-                            in.close();
-                            device1 = new JSONObject(jsonBuffer);
-                        }
-                        time1 = (int) (System.nanoTime() / 1000000 - startTime);
-
-                    } catch (Exception e) {
-                        device1Failed = true;
-                        //e.printStackTrace();
-                    } finally {
-                        if (urlConnection != null)
-                            urlConnection.disconnect();
-                    }
-                    try {
-                        long startTime = System.nanoTime() / 1000000;
-                        InputStream in = new BufferedInputStream(ur2Connection.getInputStream());
-                        if (in != null) {
-                            String jsonBuffer = "";
-                            int i;
-                            while ((i = in.read()) != -1)
-                                jsonBuffer += (char) i;
-                            in.close();
-                            device2 = new JSONObject(jsonBuffer);
-                        }
-                        time2 = (int) (System.nanoTime() / 1000000 - startTime);
-                    } catch (Exception e) {
-                        device2Failed = true;
-                        //e.printStackTrace();
-                    } finally {
-                        if (ur2Connection != null)
-                            ur2Connection.disconnect();
-                    }
+                    receiveDeviceData();
 
                     if (currentRun != null) {
                         timerLogic();
                     }
+
                     publishProgress();
                 }
             }
@@ -188,6 +136,7 @@ public class MainActivity extends AppCompatActivity {
                 //currentRun.addSyncRealTime(time1, time2);
                 successfulConnection();
             }
+
             if (currentRun != null) {
                 if (currentRun.finished) {
                     if (!currentRun.didFirstFinishCheck()) {
@@ -199,6 +148,65 @@ public class MainActivity extends AppCompatActivity {
                         startDisplayTiming();
                     }
                 }
+            }
+        }
+
+        private void receiveDeviceData(){
+            HttpURLConnection urlConnection = null;
+            HttpURLConnection ur2Connection = null;
+
+            // Connect to the devices, time how long it took to connect
+            try {
+                urlConnection = (HttpURLConnection) url1.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            try {
+
+                ur2Connection = (HttpURLConnection) url2.openConnection();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            //Get the json data of the button times
+            try {
+                long startTime = System.nanoTime() / 1000000;
+                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
+                if (in != null) {
+                    String jsonBuffer = "";
+                    int i;
+                    while ((i = in.read()) != -1)
+                        jsonBuffer += (char) i;
+                    in.close();
+                    device1 = new JSONObject(jsonBuffer);
+                }
+                time1 = (int) (System.nanoTime() / 1000000 - startTime);
+
+            } catch (Exception e) {
+                device1Failed = true;
+                //e.printStackTrace();
+            } finally {
+                if (urlConnection != null)
+                    urlConnection.disconnect();
+            }
+            try {
+                long startTime = System.nanoTime() / 1000000;
+                InputStream in = new BufferedInputStream(ur2Connection.getInputStream());
+                if (in != null) {
+                    String jsonBuffer = "";
+                    int i;
+                    while ((i = in.read()) != -1)
+                        jsonBuffer += (char) i;
+                    in.close();
+                    device2 = new JSONObject(jsonBuffer);
+                }
+                time2 = (int) (System.nanoTime() / 1000000 - startTime);
+            } catch (Exception e) {
+                device2Failed = true;
+                //e.printStackTrace();
+            } finally {
+                if (ur2Connection != null)
+                    ur2Connection.disconnect();
             }
         }
 
@@ -230,17 +238,22 @@ public class MainActivity extends AppCompatActivity {
                     publishProgress();
                 }
             }
+
             return null;
         }
 
         @Override
         protected void onProgressUpdate(String... values) {
-            if (currentRun != null && !currentRun.finished) {
-                String time = currentRun.getCurrentApproxTime();
-                timerText.setText(time);
+            if (currentRun != null) {
+                if (!currentRun.finished) {
+                    String time = currentRun.getCurrentApproxTime();
+                    timerText.setText(time);
+                }
+            } else {
+                timerText.setText("0:00.000");
             }
         }
-    };
+    }
 
     private void successfulConnection() {
         TextView status = findViewById(R.id.connectingText1);
@@ -294,7 +307,10 @@ public class MainActivity extends AppCompatActivity {
         saveButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 EditText name = findViewById(R.id.nameField);
-                String newElement = name.getText().toString() + ": " + timerText.getText().toString();
+                String newElement = name.getText().toString();
+                if (newElement.length() == 0)
+                    newElement += ": ";
+                newElement += timerText.getText().toString();
                 timeList.add(0, newElement);
                 if (fakeList.length() > 0){
                     fakeList = "\n" + fakeList;
@@ -304,6 +320,7 @@ public class MainActivity extends AppCompatActivity {
                 list.setText(fakeList);
             }
         });
+        saveButton.setEnabled(false);
 
         final Button clearButton = findViewById(R.id.clearTimes);
         clearButton.setOnClickListener(new View.OnClickListener() {
@@ -319,11 +336,32 @@ public class MainActivity extends AppCompatActivity {
         final Button resetTimeButton = findViewById(R.id.resetButton);
         resetTimeButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                timerText.setText("0:00.000");
                 stopDisplayTiming();
                 stopTimer();
-
+                timerText.setText("0:00.000");
                 startTimer();
+            }
+        });
+
+        final TextView timeText = findViewById(R.id.timeDisplayText);
+        timeText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable editable) {
+                if (currentRun != null && currentRun.finished){
+                    saveButton.setEnabled(true);
+                } else {
+                    saveButton.setEnabled(false);
+                }
             }
         });
     }

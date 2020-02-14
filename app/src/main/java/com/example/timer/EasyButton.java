@@ -33,6 +33,7 @@ public class EasyButton {
         if (initEntry){
             curTime = time;
             pressInitTime = pressTime;
+            initEntry = false;
         }
         if (pressTime > curPressTime) {
             curPressRealTime = System.nanoTime() / 1000000;

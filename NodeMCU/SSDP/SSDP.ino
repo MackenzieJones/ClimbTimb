@@ -3,8 +3,10 @@
 #include <ESP8266SSDP.h>
 
 #ifndef STASSID
-#define STASSID "FBC-GUEST"
-#define STAPSK  "climbing2019"
+#define STASSID "Pleasure"
+#define STAPSK  "bingbing"
+//#define STASSID "FBC-GUEST"
+//#define STAPSK  "climbing2019"
 #endif
 
 const char* ssid = STASSID;
@@ -12,7 +14,6 @@ const char* password = STAPSK;
 
 ESP8266WebServer HTTP(80);
 
-const int ledPin = 13;
 const int buttonPin = 5;
 int lastTimePressed = 0;
 bool buttonBlock = false;
@@ -45,7 +46,8 @@ void initHTTP(){
     Serial.printf("Starting SSDP...\n");
     SSDP.setSchemaURL("description.xml");
     SSDP.setHTTPPort(80);
-    SSDP.setName("Button1");
+    SSDP.setName("Button2");
+    SSDP.setDeviceType("upnp:rootdevice");
     SSDP.begin();
 
     Serial.printf("Ready!\n");
@@ -63,8 +65,6 @@ String prepJson(){
 
 void initPins() {
   pinMode(buttonPin, INPUT_PULLUP);
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
 }
 
 void loop() {
