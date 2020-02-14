@@ -7,36 +7,193 @@
     tools:context=".MainActivity">
 
     <EditText
-        android:id="@+id/ipText"
+        android:id="@+id/ipField"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="20dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:text="192.168."
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.19"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/ipAddressLabel" />
 
     <EditText
-        android:id="@+id/ipText2"
+        android:id="@+id/ipField2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="30dp"
+        android:layout_marginTop="8dp"
         android:ems="10"
         android:inputType="textPersonName"
         android:text="192.168."
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ipText" />
+        app:layout_constraintEnd_toEndOf="@+id/ipField"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/ipField"
+        app:layout_constraintTop_toBottomOf="@+id/ipField" />
 
     <Button
         android:id="@+id/attemptButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="50dp"
+        android:layout_marginTop="8dp"
         android:text="Connect"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.211"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ipText2" />
+        app:layout_constraintTop_toBottomOf="@+id/ipField2"
+        app:layout_constraintVertical_bias="0.003" />
+
+    <TextView
+        android:id="@+id/connectingText1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Waiting"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/ipField"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.421"
+        app:layout_constraintStart_toEndOf="@+id/ipField"
+        app:layout_constraintTop_toTopOf="@+id/ipField" />
+
+    <TextView
+        android:id="@+id/connectingText2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Waiting"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/ipField2"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.421"
+        app:layout_constraintStart_toEndOf="@+id/ipField2"
+        app:layout_constraintTop_toTopOf="@+id/ipField2" />
+
+    <TextView
+        android:id="@+id/statusLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/ipAddressLabel"
+        app:layout_constraintEnd_toEndOf="@+id/connectingText1"
+        app:layout_constraintStart_toStartOf="@+id/connectingText1"
+        app:layout_constraintTop_toTopOf="@+id/ipAddressLabel"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <TextView
+        android:id="@+id/ipAddressLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Device IP Addresses"
+        android:textColor="#000000"
+        app:layout_constraintEnd_toEndOf="@+id/ipField"
+        app:layout_constraintStart_toStartOf="@+id/ipField"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/timeDisplayText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0:00.000"
+        android:textColor="#000000"
+        android:textSize="69sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.496"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/attemptButton"
+        app:layout_constraintVertical_bias="0.081" />
+
+    <Button
+        android:id="@+id/resetButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="68dp"
+        android:layout_marginLeft="68dp"
+        android:text="Reset Time"
+        app:layout_constraintBottom_toBottomOf="@+id/attemptButton"
+        app:layout_constraintStart_toEndOf="@+id/attemptButton"
+        app:layout_constraintTop_toTopOf="@+id/attemptButton" />
+
+    <EditText
+        android:id="@+id/nameField"
+        android:layout_width="168dp"
+        android:layout_height="42dp"
+        android:layout_marginTop="20dp"
+        android:ems="10"
+        android:inputType="textPersonName"
+        app:layout_constraintStart_toEndOf="@+id/nameLabel"
+        app:layout_constraintTop_toBottomOf="@+id/timeDisplayText" />
+
+    <TextView
+        android:id="@+id/nameLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginLeft="20dp"
+        android:text="Name:"
+        android:textColor="#000000"
+        app:layout_constraintBottom_toBottomOf="@+id/nameField"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/nameField"
+        app:layout_constraintVertical_bias="0.434" />
+
+    <Button
+        android:id="@+id/saveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:text="Save Time"
+        app:layout_constraintBottom_toBottomOf="@+id/nameField"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.603"
+        app:layout_constraintStart_toEndOf="@+id/nameField"
+        app:layout_constraintTop_toTopOf="@+id/nameField"
+        app:layout_constraintVertical_bias="1.0" />
+
+    <ScrollView
+        android:id="@+id/scrollView2"
+        android:layout_width="357dp"
+        android:layout_height="196dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.486"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/nameField">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingLeft="25px"
+            android:paddingTop="10px"
+            android:paddingRight="25px"
+            android:paddingBottom="10px">
+
+            <TextView
+                android:id="@+id/entryList"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:text="No times entered"
+                android:textColor="#000000" />
+        </LinearLayout>
+    </ScrollView>
+
+    <Button
+        android:id="@+id/clearTimes"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="Clear"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="@+id/scrollView2"
+        app:layout_constraintStart_toStartOf="@+id/scrollView2"
+        app:layout_constraintTop_toBottomOf="@+id/scrollView2"
+        app:layout_constraintVertical_bias="0.18" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

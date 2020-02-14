@@ -3,8 +3,10 @@
 #include <ESP8266SSDP.h>
 
 #ifndef STASSID
-#define STASSID "imperial moist towelettes"
-#define STAPSK  "markjones"
+#define STASSID "Pleasure"
+#define STAPSK  "bingbing"
+//#define STASSID "FBC-GUEST"
+//#define STAPSK  "climbing2019"
 #endif
 
 const char* ssid = STASSID;
@@ -12,11 +14,19 @@ const char* password = STAPSK;
 
 ESP8266WebServer HTTP(80);
 
-int lastTimePressed;
+const int buttonPin = 5;
+int lastTimePressed = 0;
+bool buttonBlock = false;
+int blockTime = 2000;
 
 void setup() {
   Serial.begin(9600);
   Serial.println();
+  initPins();
+  initHTTP();
+}
+
+void initHTTP(){
   Serial.println("Starting WiFi...");
 
   WiFi.mode(WIFI_STA);
@@ -36,7 +46,8 @@ void setup() {
     Serial.printf("Starting SSDP...\n");
     SSDP.setSchemaURL("description.xml");
     SSDP.setHTTPPort(80);
-    SSDP.setName("Button1");
+    SSDP.setName("Button2");
+    SSDP.setDeviceType("upnp:rootdevice");
     SSDP.begin();
 
     Serial.printf("Ready!\n");
@@ -52,7 +63,23 @@ String prepJson(){
   return "{\"time\": " + String(millis()) + ", \"lasttimepressed\": " + String(lastTimePressed) + "}";
 }
 
+void initPins() {
+  pinMode(buttonPin, INPUT_PULLUP);
+}
+
 void loop() {
   HTTP.handleClient();
   delay(1);
+  if (!buttonBlock && !digitalRead(buttonPin)){
+    buttonBlock = true;
+    lastTimePressed = millis();
+    Serial.println("Pressed");
+  }
+
+  if (buttonBlock) {
+    if (millis() - lastTimePressed > blockTime){
+      buttonBlock = false;
+      Serial.println("Ready to press again");
+    }
+  }
 }
