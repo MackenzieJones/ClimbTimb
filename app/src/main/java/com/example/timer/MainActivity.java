@@ -11,13 +11,8 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -32,10 +27,10 @@ public class MainActivity extends Activity {
     private URL url1;
     private URL url2;
 
-    private JSONObject device1 = null;
+    private JSONObject device1 = null; //TODO: Devices should have their own object
     private JSONObject device2 = null;
 
-    private ClimbSession currentRun;
+    private ClimbSession currentRun; //TODO: current run should have a lot of the private variables here
 
     private ArrayList<String> timeList = new ArrayList<>();
     private String fakeList = "";
@@ -67,7 +62,7 @@ public class MainActivity extends Activity {
     public void startTimer(){
         if (gd != null)
             stopTimer();
-        gd = new GetDevices();
+        gd = new GetDevices(currentRun, url1, url2, device1, device2, timerText, this);
         currentRun = new ClimbSession();
         gd.executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
     }
@@ -98,135 +93,6 @@ public class MainActivity extends Activity {
         }
     }
 
-    public class GetDevices extends AsyncTask <String, String, String> {
-
-        boolean device1Failed = false;
-        boolean device2Failed = false;
-
-        int time1, time2;
-
-        @Override
-        protected String doInBackground(String... strings) {
-            long lastTimeActivated = 0;
-            while(currentRun != null) {
-                time1 = 0;
-                time2 = 0;
-                if (System.nanoTime() - lastTimeActivated > 500 * 1000 * 1000) {
-                    lastTimeActivated = System.nanoTime();
-
-                    receiveDeviceData();
-
-                    if (currentRun != null) {
-                        timerLogic();
-                    }
-
-                    publishProgress();
-                }
-            }
-            return null;
-        }
-
-        @Override
-        protected void onProgressUpdate(String... values) {
-            // Status change for the device failing or succeeding
-            if (device1Failed || device2Failed){
-                failedConnection(device1Failed, device2Failed);
-                stopTimer();
-            } else {
-                //currentRun.addSyncRealTime(time1, time2);
-                successfulConnection();
-            }
-
-            if (currentRun != null) {
-                if (currentRun.finished) {
-                    if (!currentRun.didFirstFinishCheck()) {
-                        stopDisplayTiming();
-                        timerText.setText(currentRun.getResultTime());
-                    }
-                } else if (currentRun.active){
-                    if (!currentRun.didFirstStartCheck()) {
-                        startDisplayTiming();
-                    }
-                }
-            }
-        }
-
-        private void receiveDeviceData(){
-            HttpURLConnection urlConnection = null;
-            HttpURLConnection ur2Connection = null;
-
-            // Connect to the devices, time how long it took to connect
-            try {
-                urlConnection = (HttpURLConnection) url1.openConnection();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            try {
-
-                ur2Connection = (HttpURLConnection) url2.openConnection();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            //Get the json data of the button times
-            try {
-                long startTime = System.nanoTime() / 1000000;
-                InputStream in = new BufferedInputStream(urlConnection.getInputStream());
-                if (in != null) {
-                    String jsonBuffer = "";
-                    int i;
-                    while ((i = in.read()) != -1)
-                        jsonBuffer += (char) i;
-                    in.close();
-                    device1 = new JSONObject(jsonBuffer);
-                }
-                time1 = (int) (System.nanoTime() / 1000000 - startTime);
-
-            } catch (Exception e) {
-                device1Failed = true;
-                //e.printStackTrace();
-            } finally {
-                if (urlConnection != null)
-                    urlConnection.disconnect();
-            }
-            try {
-                long startTime = System.nanoTime() / 1000000;
-                InputStream in = new BufferedInputStream(ur2Connection.getInputStream());
-                if (in != null) {
-                    String jsonBuffer = "";
-                    int i;
-                    while ((i = in.read()) != -1)
-                        jsonBuffer += (char) i;
-                    in.close();
-                    device2 = new JSONObject(jsonBuffer);
-                }
-                time2 = (int) (System.nanoTime() / 1000000 - startTime);
-            } catch (Exception e) {
-                device2Failed = true;
-                //e.printStackTrace();
-            } finally {
-                if (ur2Connection != null)
-                    ur2Connection.disconnect();
-            }
-        }
-
-        private void timerLogic() {
-            if (device1 != null && device2 != null){
-                try {
-                    int time1 = (int) (device1.get("time"));
-                    int pressedTime1 = (int) (device1.get("lasttimepressed"));
-                    int time2 = (int) (device2.get("time"));
-                    int pressedTime2 = (int) (device2.get("lasttimepressed"));
-
-                    currentRun.update(time1, pressedTime1, time2, pressedTime2);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
-
     public class DisplayTimer extends AsyncTask <String, String, String> {
 
         @Override
@@ -255,14 +121,14 @@ public class MainActivity extends Activity {
         }
     }
 
-    private void successfulConnection() {
+    public void successfulConnection() {
         TextView status = findViewById(R.id.connectingText1);
         status.setText("Success");
         status = findViewById(R.id.connectingText2);
         status.setText("Success");
     }
 
-    private void failedConnection(boolean button1, boolean button2){
+    public void failedConnection(boolean button1, boolean button2){
         System.out.println("Failed Connecting");
         TextView status1 = findViewById(R.id.connectingText1);
         if (button1){
@@ -283,7 +149,7 @@ public class MainActivity extends Activity {
         b.setEnabled(false);
     }
 
-    private void initButtons() {
+    public void initButtons() {
         final Button attemptButton = findViewById(R.id.attemptButton);
         attemptButton.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v) {

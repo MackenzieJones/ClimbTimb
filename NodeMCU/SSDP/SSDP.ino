@@ -1,10 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <ESP8266SSDP.h>
+#include <ESP8266mDNS.h>
 
 #ifndef STASSID
-#define STASSID "Pleasure"
-#define STAPSK  "bingbing"
+#define STASSID "Pete's a Jones"
+#define STAPSK  "nicebutwhole"
 //#define STASSID "FBC-GUEST"
 //#define STAPSK  "climbing2019"
 #endif
@@ -12,7 +13,7 @@
 const char* ssid = STASSID;
 const char* password = STAPSK;
 
-ESP8266WebServer HTTP(80);
+WiFiServer HTTP(80);
 
 const int buttonPin = 5;
 int lastTimePressed = 0;
@@ -24,6 +25,10 @@ void setup() {
   Serial.println();
   initPins();
   initHTTP();
+}
+
+void initPins() {
+  pinMode(buttonPin, INPUT_PULLUP);
 }
 
 void initHTTP(){
@@ -41,6 +46,7 @@ void initHTTP(){
     HTTP.on("/description.xml", HTTP_GET, []() {
       SSDP.schema(HTTP.client());
     });
+
     HTTP.begin();
 
     Serial.printf("Starting SSDP...\n");
@@ -49,8 +55,10 @@ void initHTTP(){
     SSDP.setName("Button2");
     SSDP.setDeviceType("upnp:rootdevice");
     SSDP.begin();
-
-    Serial.printf("Ready!\n");
+    
+    Serial.printf("Ready at ");
+    Serial.print(WiFi.localIP());
+    Serial.printf("\n");
   } else {
     Serial.printf("WiFi Failed\n");
     while (1) {
@@ -61,10 +69,6 @@ void initHTTP(){
 
 String prepJson(){
   return "{\"time\": " + String(millis()) + ", \"lasttimepressed\": " + String(lastTimePressed) + "}";
-}
-
-void initPins() {
-  pinMode(buttonPin, INPUT_PULLUP);
 }
 
 void loop() {
